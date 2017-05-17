@@ -1,8 +1,8 @@
 module xymodem.ymodem;
 
-alias TimeOutCallback = void delegate(ubyte msec);
-alias ReadCallback = ubyte[] delegate();
-alias SendCallback = void delegate(ubyte[]);
+alias ReadCallback = ubyte[] function() pure nothrow @safe;
+alias SendCallback = void function(ubyte[]);
+alias TimeOutCallback = void function(ubyte msec);
 
 void yModemSend
 (
