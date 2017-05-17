@@ -1,6 +1,6 @@
 module xymodem.ymodem;
 
-alias ReadCallback = ubyte[] function() pure nothrow @safe;
+alias ReadCallback = ubyte[] function();
 alias SendCallback = void function(ubyte[]);
 alias TimeOutCallback = void function(ubyte msec);
 
@@ -19,7 +19,12 @@ void yModemSend
 
 	size_t blockNum;
 
-	//~ ubyte[] recv = readCallback;
+	ubyte[] recv = readCallback;
+
+	if(recv == [cast(ubyte) Control.ST_C])
+	{
+		// ready to send block
+	}
 }
 
 /// Protocol characters
