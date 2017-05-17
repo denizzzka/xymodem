@@ -1,16 +1,14 @@
 module xymodem.ymodem;
 
-alias ReadCallback = ubyte[] function();
-alias SendCallback = void function(ubyte[]);
-alias TimeOutCallback = void function(ubyte msec);
+alias ReadCallback = ubyte[] delegate();
+alias SendCallback = void delegate(ubyte[] data);
+alias TimeOutCallback = void delegate(ubyte msecs);
 
 void yModemSend
 (
-	alias readCallback, // : ReadCallback,
-	alias sendCallback, // = SendCallback
-	alias timeOutCallback, // = TimeOutCallback
-)
-(
+	ReadCallback readCallback,
+	SendCallback sendCallback,
+	TimeOutCallback timeOutCallback,
 	in string filename,
 	size_t size
 )
@@ -19,7 +17,7 @@ void yModemSend
 
 	size_t blockNum;
 
-	ubyte[] recv = readCallback;
+	ubyte[] recv = readCallback();
 
 	if(recv == [cast(ubyte) Control.ST_C])
 	{
@@ -60,5 +58,11 @@ unittest
 
 	void doTimeout(ubyte) {}
 
-	yModemSend!(readFromFile, sendToLine, doTimeout)("unittest.bin", 2000);
+	yModemSend(
+            &readFromFile,
+            &sendToLine,
+            &doTimeout,
+            "unittest.bin",
+            2000
+		);
 }
