@@ -6,23 +6,23 @@ alias TimeOutCallback = void delegate(ubyte msecs);
 
 void yModemSend
 (
-	ReadCallback readCallback,
-	SendCallback sendCallback,
-	TimeOutCallback timeOutCallback,
-	in string filename,
-	size_t size
+    ReadCallback readCallback,
+    SendCallback sendCallback,
+    TimeOutCallback timeOutCallback,
+    in string filename,
+    size_t size
 )
 {
-	// TODO: check filename for valid YMODEM symbols
+    // TODO: check filename for valid YMODEM symbols
 
-	size_t blockNum;
+    size_t blockNum;
 
-	ubyte[] recv = readCallback();
+    ubyte[] recv = readCallback();
 
-	if(recv == [cast(ubyte) Control.ST_C])
-	{
-		// ready to send block
-	}
+    if(recv == [cast(ubyte) Control.ST_C])
+    {
+        // ready to send block
+    }
 }
 
 /// Protocol characters
@@ -47,22 +47,22 @@ immutable SEND_BLOCK_TIMEOUT = 10_000;
 
 unittest
 {
-	ubyte[] readFromFile()
-	{
-		auto b = new ubyte[1024];
+    ubyte[] readFromFile()
+    {
+        auto b = new ubyte[1024];
 
-		return b;
-	}
+        return b;
+    }
 
-	void sendToLine(ubyte[]) {}
+    void sendToLine(ubyte[]) {}
 
-	void doTimeout(ubyte) {}
+    void doTimeout(ubyte) {}
 
-	yModemSend(
+    yModemSend(
             &readFromFile,
             &sendToLine,
             &doTimeout,
             "unittest.bin",
             2000
-		);
+        );
 }
