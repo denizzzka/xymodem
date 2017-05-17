@@ -1,10 +1,15 @@
 module xymodem.crc;
 
+@safe:
+
 /**
  * ZMODEM CRC (CRC-16/ACORN, CRC-16/LTE) calculation.
  *
  * Params:
- *      crc =   current CRC value. Result of each calculation will be plased to it.
+ *      crc =   current CRC value
+ *              Should be zero at start of calculation.
+ *              Result of each calculation will be plased to it.
+ *
  *      buff =  bytes for calculation
  */
 void crc16(ref ushort crc, in ubyte[] buff) pure nothrow @safe @nogc
