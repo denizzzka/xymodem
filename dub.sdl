@@ -1,0 +1,5 @@
+name "xymodem"
+description "XMODEM and YMODEM protocols implementation"
+authors "Denis Feklushkin"
+copyright "Copyright © 2017, Denis Feklushkin"
+license "MIT"
