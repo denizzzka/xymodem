@@ -51,6 +51,18 @@ class YModemSender
         }
     }
 
+    private bool sendYModemHeaderBlock(string filename, size_t filesize)
+    {
+        import std.conv: to;
+        import std.string: toStringz;
+
+        string blockContent = filename ~ ' ' ~ filesize.to!string;
+        immutable(char)* stringz = blockContent.toStringz;
+        ubyte* bytes = cast(ubyte*) stringz;
+
+        return sendBlock(bytes[0 .. blockContent.length]);
+    }
+
     private bool sendBlock(in ubyte[] blockData)
     {
         import xymodem.crc: crc16;
