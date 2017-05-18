@@ -49,32 +49,43 @@ class YModemSender
 
         currBlockNum = 0;
         currByte = 0;
+        ubyte errcnt;
 
         while(currByte < fileData.length)
         {
             waitFor([Control.ST_C]);
 
-            bool sendResult;
+            bool sendSuccess;
 
             if(currBlockNum == 0)
             {
-                sendResult = sendYModemHeaderBlock(filename, fileData.length);
+                sendSuccess = sendYModemHeaderBlock(filename, fileData.length);
             }
             else
             {
                 const size_t remaining = fileData.length - currByte;
                 const size_t blockSize = remaining > 1024 ? 1024 : remaining;
 
-                sendResult = sendBlock(fileData[currByte .. currByte + blockSize]);
+                sendSuccess = sendBlock(fileData[currByte .. currByte + blockSize]);
 
-                if(sendResult)
+                if(sendSuccess)
                     currByte += blockSize;
             }
 
-            if(!sendResult)
+            if(!sendSuccess)
+            {
+                errcnt++;
+
+                if(errcnt >= MAXERRORS)
+                    throw new YModemException("Sender reached maximum errors count", __FILE__, __LINE__);
+
                 continue;
+            }
             else
+            {
+                errcnt = 0;
                 currBlockNum++;
+            }
         }
     }
 
