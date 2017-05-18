@@ -28,10 +28,11 @@ class YModemSender
         timeOutCallback = timeoutCb;
     }
 
+
     void send
     (
         in string filename,
-        size_t size
+        in ubyte[] fileData
     )
     {
         // TODO: check filename for valid YMODEM symbols
@@ -39,11 +40,14 @@ class YModemSender
         currBlockNum = 0;
         currByte = 0;
 
-        ubyte[] recv = readData();
+        Control recv = receive();
 
-        if(recv == [cast(ubyte) Control.ST_C])
+        const size_t remaining = fileData.length - currByte;
+        const size_t blockSize = remaining > 1024 ? 1024 : remaining;
+
+        if(recv == Control.ST_C)
         {
-            // ready to send block
+            sendBlock(fileData[currByte .. currByte + blockSize]);
         }
     }
 
@@ -133,5 +137,5 @@ unittest
 
     auto sender = new YModemSender(&readFromFile, &sendToLine, &doTimeout);
 
-    sender.send("unittest.bin", 2000);
+    sender.send("unittest.bin", [1, 2, 3, 4, 5]);
 }
