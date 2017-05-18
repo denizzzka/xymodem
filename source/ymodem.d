@@ -1,6 +1,7 @@
 module xymodem.ymodem;
 
 import xymodem.exception;
+import std.conv: to;
 
 alias ReadCallback = ubyte[] delegate();
 alias SendCallback = bool delegate(const ubyte[] data); /// Returns: true if send was successful
@@ -45,14 +46,19 @@ class YModemSender
         currBlockNum = 0;
         currByte = 0;
 
-        Control recv = receive();
-
-        const size_t remaining = fileData.length - currByte;
-        const size_t blockSize = remaining > 1024 ? 1024 : remaining;
-
-        if(recv == Control.ST_C)
+        while(true)
         {
-            sendBlock(fileData[currByte .. currByte + blockSize]);
+            Control recv = receive();
+
+            waitFor([Control.ST_C]);
+
+            const size_t remaining = fileData.length - currByte;
+            const size_t blockSize = remaining > 1024 ? 1024 : remaining;
+
+            if(recv == Control.ST_C)
+            {
+                sendBlock(fileData[currByte .. currByte + blockSize]);
+            }
         }
     }
 
@@ -88,6 +94,22 @@ class YModemSender
             sendData(header) &&
             sendData(blockData) &&
             sendData(orderedCRC);
+    }
+
+    private void waitFor(Control[] ctls)
+    {
+        Control recv;
+
+        for(ubyte errcnt = 0; errcnt < MAXERRORS; errcnt++)
+        {
+            recv = receive();
+
+            foreach(c; ctls)
+                if(recv == c)
+                    break;
+        }
+
+        throw new YModemException("Received "~recv.to!string~", but expected "~ctls.to!string, __FILE__, __LINE__);
     }
 
     private Control receive()
@@ -130,7 +152,7 @@ private enum Control: ubyte
 }
 
 // Some useful constants
-private immutable MAXERRORS = 10;
+private immutable ubyte MAXERRORS = 10;
 immutable BLOCK_TIMEOUT = 1000;
 immutable REQUEST_TIMEOUT = 3000;
 immutable WAIT_FOR_RECEIVER_TIMEOUT = 60_000;
