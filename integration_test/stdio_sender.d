@@ -1,7 +1,10 @@
 import xymodem.ymodem;
 import std.getopt;
 import std.file;
+import std.conv: to;
 import std.stdio;
+import cstdio = core.stdc.stdio;
+import core.thread;
 
 int main(string[] args)
 {
@@ -12,20 +15,28 @@ int main(string[] args)
 
     bool toStdout(const ubyte[] toSend)
     {
+        Thread.sleep(dur!("msecs")(500));
+
         write(cast(string) toSend);
+        stdout.flush();
 
         return true;
     }
 
     ubyte[] fromStdin()
     {
+        Thread.sleep(dur!("msecs")(500));
+
         ubyte[] ret;
 
-        while (!stdin.eof)
+        while(true)
         {
-            char[1] arr;
-            stdin.rawRead(arr);
-            ret ~= arr;
+            auto c = getchar();
+
+            if(c != EOF)
+                ret ~= c.to!ubyte;
+            else
+                break;
         }
 
         //~ ret = [ 0x06 /*ACK*/, 0x06 /*ACK*/ ];
