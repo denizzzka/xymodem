@@ -8,11 +8,12 @@ alias TimeOutCallback = void delegate(ubyte msecs);
 
 class YModemSender
 {
-    private const ReadCallback readCallback;
-    private const SendCallback sendCallback;
+    private const ReadCallback readData;
+    private const SendCallback sendData;
     private const TimeOutCallback timeOutCallback;
 
     private size_t currBlockNum;
+    private size_t currByte;
     private bool isAborting;
 
     this
@@ -22,8 +23,8 @@ class YModemSender
         TimeOutCallback timeoutCb
     )
     {
-        readCallback = readCb;
-        sendCallback = sendCb;
+        readData = readCb;
+        sendData = sendCb;
         timeOutCallback = timeoutCb;
     }
 
@@ -36,7 +37,9 @@ class YModemSender
         // TODO: check filename for valid YMODEM symbols
 
         currBlockNum = 0;
-        ubyte[] recv = readCallback();
+        currByte = 0;
+
+        ubyte[] recv = readData();
 
         if(recv == [cast(ubyte) Control.ST_C])
         {
@@ -46,6 +49,31 @@ class YModemSender
 
     private void sendBlock(in ubyte[] data)
     {
+    }
+
+    private Control receive()
+    {
+        ubyte[] r;
+        size_t errcnt;
+
+        while(true)
+        {
+            r = readData();
+
+            if(r.length != 0)
+            {
+                break;
+            }
+            else
+            {
+                errcnt++;
+
+                if(errcnt >= MAXERRORS)
+                    throw new YModemException("Too many errors on receive", __FILE__, __LINE__);
+            }
+        }
+
+        return cast(Control) r[$-1];
     }
 }
 
