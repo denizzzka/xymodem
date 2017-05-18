@@ -80,7 +80,8 @@ class YModemSender
                     if(remaining != blockSize)
                     {
                         // need pading
-                        auto paddingBuff = new ubyte[blockSize - remaining];
+                        auto paddingBuff = new ubyte[](cast(ubyte) Control.CPMEOF);
+                        paddingBuff.length = blockSize - remaining;
 
                         sendSuccess = sendBlock(sliceToSend ~ paddingBuff);
                     }
@@ -126,7 +127,31 @@ class YModemSender
             }
         }
 
-        // TODO: добавить завершение передачи файла
+        // End of file transfer
+        {
+            const ubyte[] buff = [cast(ubyte) Control.EOT];
+            Control symbol;
+            ubyte errcnt;
+
+            while(true)
+            {
+                sendData(buff);
+
+                symbol = waitFor([Control.ACK, Control.NAK]);
+
+                if(symbol == Control.ACK)
+                {
+                    break;
+                }
+                else
+                {
+                    errcnt++;
+
+                    if(errcnt >= MAXERRORS)
+                        throw new YModemException("EOF control symbol receiver reached maximum error count", __FILE__, __LINE__);
+                }
+            }
+        }
     }
 
     private bool sendYModemHeaderBlock(string filename, size_t filesize)
