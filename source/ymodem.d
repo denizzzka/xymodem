@@ -140,14 +140,27 @@ unittest
         return b;
     }
 
-    bool sendToLine(const ubyte[])
+    ubyte[] sended;
+
+    bool sendToLine(const ubyte[] toSend)
     {
+        sended ~= toSend;
+
         return true;
     }
 
     void doTimeout(ubyte) {}
 
     auto sender = new YModemSender(&readFromFile, &sendToLine, &doTimeout);
+
+    import std.stdio: writeln;
+    import std.digest.digest: toHexString;
+
+    {
+        sender.sendYModemHeaderBlock("bbcsched.txt", 6347);
+        writeln(sended.toHexString());
+        sended.length = 0;
+    }
 
     sender.send("unittest.bin", [1, 2, 3, 4, 5]);
 }
