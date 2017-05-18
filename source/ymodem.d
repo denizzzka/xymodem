@@ -4,12 +4,14 @@ import xymodem.exception;
 import std.conv: to;
 
 alias ReadCallback = ubyte[] delegate();
+alias RecvCallback = ubyte[] delegate();
 alias SendCallback = bool delegate(const ubyte[] data); /// Returns: true if send was successful
 alias TimeOutCallback = void delegate(ubyte msecs);
 
 class YModemSender
 {
     private const ReadCallback readData;
+    private const RecvCallback recvData;
     private const SendCallback sendData;
     private const TimeOutCallback timeOutCallback;
 
@@ -20,11 +22,13 @@ class YModemSender
     this
     (
         ReadCallback readCb,
+        RecvCallback recvCb,
         SendCallback sendCb,
         TimeOutCallback timeoutCb
     )
     {
         readData = readCb;
+        recvData = recvCb;
         sendData = sendCb;
         timeOutCallback = timeoutCb;
     }
@@ -46,19 +50,31 @@ class YModemSender
         currBlockNum = 0;
         currByte = 0;
 
-        while(true)
+        while(currByte < fileData.length)
         {
-            Control recv = receive();
-
             waitFor([Control.ST_C]);
 
-            const size_t remaining = fileData.length - currByte;
-            const size_t blockSize = remaining > 1024 ? 1024 : remaining;
+            bool sendResult;
 
-            if(recv == Control.ST_C)
+            if(currBlockNum == 0)
             {
-                sendBlock(fileData[currByte .. currByte + blockSize]);
+                sendResult = sendYModemHeaderBlock(filename, fileData.length);
             }
+            else
+            {
+                const size_t remaining = fileData.length - currByte;
+                const size_t blockSize = remaining > 1024 ? 1024 : remaining;
+
+                sendResult = sendBlock(fileData[currByte .. currByte + blockSize]);
+
+                if(sendResult)
+                    currByte += blockSize;
+            }
+
+            if(!sendResult)
+                continue;
+            else
+                currBlockNum++;
         }
     }
 
@@ -96,30 +112,27 @@ class YModemSender
             sendData(orderedCRC);
     }
 
-    private void waitFor(Control[] ctls)
+    private void waitFor(in Control[] ctls)
     {
-        Control recv;
+        Control recv = receiveContrloSymbol();
 
-        for(ubyte errcnt = 0; errcnt < MAXERRORS; errcnt++)
+        foreach(c; ctls)
         {
-            recv = receive();
-
-            foreach(c; ctls)
-                if(recv == c)
-                    break;
+            if(recv == c)
+                return;
         }
 
         throw new YModemException("Received "~recv.to!string~", but expected "~ctls.to!string, __FILE__, __LINE__);
     }
 
-    private Control receive()
+    private Control receiveContrloSymbol()
     {
         ubyte[] r;
         size_t errcnt;
 
         while(true)
         {
-            r = readData();
+            r = recvData();
 
             if(r.length != 0)
             {
@@ -176,9 +189,21 @@ unittest
         return true;
     }
 
+    ubyte[] receiveFromLine()
+    {
+        ubyte[] b = [ 'C', 'C' ];
+
+        return b;
+    }
+
     void doTimeout(ubyte) {}
 
-    auto sender = new YModemSender(&readFromFile, &sendToLine, &doTimeout);
+    auto sender = new YModemSender(
+            &readFromFile,
+            &receiveFromLine,
+            &sendToLine,
+            &doTimeout
+        );
 
     import std.stdio: writeln;
     import std.digest.digest: toHexString;
