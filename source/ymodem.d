@@ -3,7 +3,7 @@ module xymodem.ymodem;
 import xymodem.exception;
 
 alias ReadCallback = ubyte[] delegate();
-alias SendCallback = void delegate(ubyte[] data);
+alias SendCallback = void delegate(const ubyte[] data);
 alias TimeOutCallback = void delegate(ubyte msecs);
 
 class YModemSender
@@ -12,7 +12,7 @@ class YModemSender
     private const SendCallback sendData;
     private const TimeOutCallback timeOutCallback;
 
-    private size_t currBlockNum;
+    private ubyte currBlockNum;
     private size_t currByte;
     private bool isAborting;
 
@@ -47,8 +47,26 @@ class YModemSender
         }
     }
 
-    private void sendBlock(in ubyte[] data)
+    private void sendBlock(in ubyte[] blockData)
     {
+        import xymodem.crc: crc16;
+        import std.bitmanip: nativeToLittleEndian;
+
+        const ubyte[3] header = [
+            cast(ubyte) Control.STX,
+            currBlockNum,
+            0xFF - currBlockNum
+        ];
+
+        sendData(header);
+        sendData(blockData);
+
+        ushort crc;
+        crc16(crc, blockData);
+
+        ubyte[2] orderedCRC = nativeToLittleEndian(crc);
+
+        sendData(orderedCRC);
     }
 
     private Control receive()
@@ -106,7 +124,7 @@ unittest
         return b;
     }
 
-    void sendToLine(ubyte[]) {}
+    void sendToLine(const ubyte[]) {}
 
     void doTimeout(ubyte) {}
 
