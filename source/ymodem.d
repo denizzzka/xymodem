@@ -52,7 +52,7 @@ class YModemSender
         ubyte sendErrCnt;
         ubyte recvErrCnt;
 
-        while(currByte < fileData.length)
+        while(currByte <= fileData.length)
         {
             // Send block
             {
@@ -65,9 +65,28 @@ class YModemSender
                 else
                 {
                     const size_t remaining = fileData.length - currByte;
-                    const size_t blockSize = remaining > 1024 ? 1024 : remaining;
 
-                    sendSuccess = sendBlock(fileData[currByte .. currByte + blockSize]);
+                    size_t blockSize;
+
+                    if(remaining <= 128)
+                        blockSize = 128;
+                    else
+                        blockSize = 1024;
+
+                    const usefulBlockDataSize = remaining > blockSize ? blockSize : remaining;
+                    const sliceToSend = fileData[currByte .. currByte + usefulBlockDataSize];
+
+                    if(remaining != blockSize)
+                    {
+                        // need pading
+                        auto paddingBuff = new ubyte[blockSize - remaining];
+
+                        sendSuccess = sendBlock(sliceToSend ~ paddingBuff);
+                    }
+                    else
+                    {
+                        sendSuccess = sendBlock(sliceToSend);
+                    }
 
                     if(sendSuccess)
                         currByte += blockSize;
@@ -108,6 +127,8 @@ class YModemSender
                 }
             }
         }
+
+        // TODO: добавить завершение передачи файла
     }
 
     private bool sendYModemHeaderBlock(string filename, size_t filesize)
@@ -192,7 +213,7 @@ private enum Control: ubyte
     ACK = 0x06, /// ACKnowlege
     NAK = 0x15, /// Negative AcKnowlege
     CAN = 0x18, /// CANcel character
-    CPMEOF = 0x1A, /// "^Z"
+    CPMEOF = 0x1A, /// '^Z'
     ST_C = 'C' /// Start XMODEM/CRC block
 }
 
