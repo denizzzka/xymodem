@@ -1,5 +1,13 @@
 name "xymodem"
-description "XMODEM and YMODEM protocols implementation"
+description "YMODEM sender protocol implementation"
 authors "Denis Feklushkin"
 copyright "Copyright © 2017, Denis Feklushkin"
 license "MIT"
+targetType "sourceLibrary"
+
+subPackage {
+	name "integration_test"
+	sourcePaths "integration_test"
+	dependency "xymodem" version="*"
+	targetType "executable"
+}

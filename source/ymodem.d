@@ -3,17 +3,13 @@ module xymodem.ymodem;
 import xymodem.exception;
 import std.conv: to;
 
-alias ReadCallback = ubyte[] delegate();
 alias RecvCallback = ubyte[] delegate();
 alias SendCallback = bool delegate(const ubyte[] data); /// Returns: true if send was successful
-alias TimeOutCallback = void delegate(ubyte msecs);
 
 class YModemSender
 {
-    private const ReadCallback readData;
     private const RecvCallback recvData;
     private const SendCallback sendData;
-    private const TimeOutCallback timeOutCallback;
 
     private ubyte currBlockNum;
     private size_t currByte;
@@ -21,16 +17,12 @@ class YModemSender
 
     this
     (
-        ReadCallback readCb,
         RecvCallback recvCb,
         SendCallback sendCb,
-        TimeOutCallback timeoutCb
     )
     {
-        readData = readCb;
         recvData = recvCb;
         sendData = sendCb;
-        timeOutCallback = timeoutCb;
     }
 
 
@@ -275,18 +267,15 @@ unittest
     void doTimeout(ubyte) {}
 
     auto sender = new YModemSender(
-            &readFromFile,
             &receiveFromLine,
             &sendToLine,
-            &doTimeout
         );
 
-    import std.stdio: writeln;
     import std.digest.digest: toHexString;
 
     {
         sender.sendYModemHeaderBlock("bbcsched.txt", 6347);
-        writeln(sended.toHexString());
+        assert(sended.toHexString == "0200FF62626373636865642E747874203633343792F8");
         sended.length = 0;
     }
 
