@@ -49,14 +49,15 @@ class YModemSender
 
         currBlockNum = 0;
         currByte = 0;
-        ubyte sendErrCnt;
+        size_t currEndByte = 0;
         ubyte recvErrCnt;
 
-        while(currByte <= fileData.length)
+        while(currByte < fileData.length)
         {
             // Send block
             {
                 bool sendSuccess;
+                ubyte sendErrCnt;
 
                 if(currBlockNum == 0)
                 {
@@ -73,8 +74,8 @@ class YModemSender
                     else
                         blockSize = 1024;
 
-                    const usefulBlockDataSize = remaining > blockSize ? blockSize : remaining;
-                    const sliceToSend = fileData[currByte .. currByte + usefulBlockDataSize];
+                    currEndByte = currByte + (remaining > blockSize ? blockSize : remaining);
+                    const sliceToSend = fileData[currByte .. currEndByte];
 
                     if(remaining != blockSize)
                     {
@@ -87,9 +88,6 @@ class YModemSender
                     {
                         sendSuccess = sendBlock(sliceToSend);
                     }
-
-                    if(sendSuccess)
-                        currByte += blockSize;
                 }
 
                 if(!sendSuccess)
@@ -101,10 +99,6 @@ class YModemSender
 
                     continue;
                 }
-                else
-                {
-                    sendErrCnt = 0;
-                }
             }
 
             // receive control symbol
@@ -112,17 +106,21 @@ class YModemSender
                 Control ctlSymbol;
 
                 if(currBlockNum == 0)
-                    ctlSymbol = waitFor([Control.ST_C, Control.ACK, Control.NAK]);
+                    ctlSymbol = waitFor([Control.ACK, Control.NAK, Control.ST_C]);
                 else
                     ctlSymbol = waitFor([Control.ACK, Control.NAK]);
 
                 if(ctlSymbol == Control.NAK)
                 {
                     recvErrCnt++;
+
+                    if(recvErrCnt >= MAXERRORS)
+                        throw new YModemException("Control symbol receiver reached maximum error count", __FILE__, __LINE__);
                 }
                 else
                 {
                     recvErrCnt = 0;
+                    currByte = currEndByte;
                     currBlockNum++;
                 }
             }
