@@ -77,7 +77,7 @@ class YModemSender
                 errcnt++;
 
                 if(errcnt >= MAXERRORS)
-                    throw new YModemException("Sender reached maximum errors count", __FILE__, __LINE__);
+                    throw new YModemException("Sender reached maximum error count", __FILE__, __LINE__);
 
                 continue;
             }
