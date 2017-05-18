@@ -49,42 +49,63 @@ class YModemSender
 
         currBlockNum = 0;
         currByte = 0;
-        ubyte errcnt;
+        ubyte sendErrCnt;
+        ubyte recvErrCnt;
 
         while(currByte < fileData.length)
         {
-            waitFor([Control.ST_C]);
-
-            bool sendSuccess;
-
-            if(currBlockNum == 0)
+            // Send block
             {
-                sendSuccess = sendYModemHeaderBlock(filename, fileData.length);
+                bool sendSuccess;
+
+                if(currBlockNum == 0)
+                {
+                    sendSuccess = sendYModemHeaderBlock(filename, fileData.length);
+                }
+                else
+                {
+                    const size_t remaining = fileData.length - currByte;
+                    const size_t blockSize = remaining > 1024 ? 1024 : remaining;
+
+                    sendSuccess = sendBlock(fileData[currByte .. currByte + blockSize]);
+
+                    if(sendSuccess)
+                        currByte += blockSize;
+                }
+
+                if(!sendSuccess)
+                {
+                    sendErrCnt++;
+
+                    if(sendErrCnt >= MAXERRORS)
+                        throw new YModemException("Sender reached maximum error count", __FILE__, __LINE__);
+
+                    continue;
+                }
+                else
+                {
+                    sendErrCnt = 0;
+                }
             }
-            else
+
+            // receive control symbol
             {
-                const size_t remaining = fileData.length - currByte;
-                const size_t blockSize = remaining > 1024 ? 1024 : remaining;
+                Control ctlSymbol;
 
-                sendSuccess = sendBlock(fileData[currByte .. currByte + blockSize]);
+                if(currBlockNum == 0)
+                    ctlSymbol = waitFor([Control.ST_C, Control.ACK, Control.NAK]);
+                else
+                    ctlSymbol = waitFor([Control.ACK, Control.NAK]);
 
-                if(sendSuccess)
-                    currByte += blockSize;
-            }
-
-            if(!sendSuccess)
-            {
-                errcnt++;
-
-                if(errcnt >= MAXERRORS)
-                    throw new YModemException("Sender reached maximum error count", __FILE__, __LINE__);
-
-                continue;
-            }
-            else
-            {
-                errcnt = 0;
-                currBlockNum++;
+                if(ctlSymbol == Control.NAK)
+                {
+                    recvErrCnt++;
+                }
+                else
+                {
+                    recvErrCnt = 0;
+                    currBlockNum++;
+                }
             }
         }
     }
@@ -123,14 +144,14 @@ class YModemSender
             sendData(orderedCRC);
     }
 
-    private void waitFor(in Control[] ctls)
+    private Control waitFor(in Control[] ctls)
     {
         Control recv = receiveContrloSymbol();
 
         foreach(c; ctls)
         {
             if(recv == c)
-                return;
+                return recv;
         }
 
         throw new YModemException("Received "~recv.to!string~", but expected "~ctls.to!string, __FILE__, __LINE__);
@@ -202,7 +223,7 @@ unittest
 
     ubyte[] receiveFromLine()
     {
-        ubyte[] b = [ 'C', 'C' ];
+        ubyte[] b = [ Control.ACK, Control.ACK ];
 
         return b;
     }
