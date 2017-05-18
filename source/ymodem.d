@@ -1,5 +1,7 @@
 module xymodem.ymodem;
 
+import xymodem.exception;
+
 alias ReadCallback = ubyte[] delegate();
 alias SendCallback = void delegate(ubyte[] data);
 alias TimeOutCallback = void delegate(ubyte msecs);
@@ -10,6 +12,7 @@ class YModemSender
     private const SendCallback sendCallback;
     private const TimeOutCallback timeOutCallback;
 
+    private size_t currBlockNum;
     private bool isAborting;
 
     this
@@ -32,14 +35,17 @@ class YModemSender
     {
         // TODO: check filename for valid YMODEM symbols
 
-        size_t blockNum;
-
+        currBlockNum = 0;
         ubyte[] recv = readCallback();
 
         if(recv == [cast(ubyte) Control.ST_C])
         {
             // ready to send block
         }
+    }
+
+    private void sendBlock(in ubyte[] data)
+    {
     }
 }
 
