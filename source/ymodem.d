@@ -4,24 +4,42 @@ alias ReadCallback = ubyte[] delegate();
 alias SendCallback = void delegate(ubyte[] data);
 alias TimeOutCallback = void delegate(ubyte msecs);
 
-void yModemSend
-(
-    ReadCallback readCallback,
-    SendCallback sendCallback,
-    TimeOutCallback timeOutCallback,
-    in string filename,
-    size_t size
-)
+class YModemSender
 {
-    // TODO: check filename for valid YMODEM symbols
+    private const ReadCallback readCallback;
+    private const SendCallback sendCallback;
+    private const TimeOutCallback timeOutCallback;
 
-    size_t blockNum;
+    private bool isAborting;
 
-    ubyte[] recv = readCallback();
-
-    if(recv == [cast(ubyte) Control.ST_C])
+    this
+    (
+        ReadCallback readCb,
+        SendCallback sendCb,
+        TimeOutCallback timeoutCb
+    )
     {
-        // ready to send block
+        readCallback = readCb;
+        sendCallback = sendCb;
+        timeOutCallback = timeoutCb;
+    }
+
+    void send
+    (
+        in string filename,
+        size_t size
+    )
+    {
+        // TODO: check filename for valid YMODEM symbols
+
+        size_t blockNum;
+
+        ubyte[] recv = readCallback();
+
+        if(recv == [cast(ubyte) Control.ST_C])
+        {
+            // ready to send block
+        }
     }
 }
 
@@ -58,11 +76,7 @@ unittest
 
     void doTimeout(ubyte) {}
 
-    yModemSend(
-            &readFromFile,
-            &sendToLine,
-            &doTimeout,
-            "unittest.bin",
-            2000
-        );
+    auto sender = new YModemSender(&readFromFile, &sendToLine, &doTimeout);
+
+    sender.send("unittest.bin", 2000);
 }
