@@ -19,9 +19,17 @@ int main(string[] args)
 
     ubyte[] fromStdin()
     {
-        ubyte[] b = [ 0x06 /*ACK*/, 0x06 /*ACK*/ ];
+        ubyte[] ret;
 
-        return b;
+        while (!stdin.eof)
+        {
+            char[1] arr;
+            stdin.rawRead(arr);
+            ret ~= arr;
+        }
+
+        //~ ret = [ 0x06 /*ACK*/, 0x06 /*ACK*/ ];
+        return ret;
     }
 
     auto sender = new YModemSender(
