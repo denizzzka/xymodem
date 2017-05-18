@@ -35,7 +35,12 @@ class YModemSender
         in ubyte[] fileData
     )
     {
-        // TODO: check filename for valid YMODEM symbols
+        /*
+         * TODO: check filename for valid YMODEM symbols:
+         * ASCIIZ string without '\'.
+         * Systems that do not distinguish between upper and lower case
+         * letters in filenames shall send the pathname in lower case only.
+         */
 
         currBlockNum = 0;
         currByte = 0;
