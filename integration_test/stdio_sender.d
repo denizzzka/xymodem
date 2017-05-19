@@ -46,20 +46,15 @@ int main(string[] args)
     // Set stdio into non-blocking mode
     {
         import core.sys.posix.fcntl;
+        import std.exception;
 
         int x = fcntl(stdin.fileno, F_GETFL, 0);
-
-        if (x == -1) {
-            writeln("fcntl error");
-            return 1;
-        }
+        enforce(x != -1, "fcntl get error");
 
         x |= O_NONBLOCK;
 
         int r = fcntl(stdin.fileno, F_SETFL, x);
-
-        if (r == -1)
-            writeln("fcntl set error");
+        enforce(r != -1, "fcntl set error");
     }
 
     auto sender = new YModemSender(
