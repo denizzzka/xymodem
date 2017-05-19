@@ -15,6 +15,8 @@ class YModemSender
     private size_t currByte;
     private bool isAborting;
 
+    private immutable Control[] ACK = [Control.ACK];
+
     this
     (
         RecvCallback recvCb,
@@ -63,11 +65,10 @@ class YModemSender
 
                 currEndByte = currByte + (remaining > blockSize ? blockSize : remaining);
                 const sliceToSend = fileData[currByte .. currEndByte];
-                immutable Control[] validAnswers = [Control.ACK];
 
                 if(remaining == blockSize)
                 {
-                    sendBlock(sliceToSend, validAnswers);
+                    sendBlock(sliceToSend, ACK);
                 }
                 else
                 {
@@ -75,7 +76,7 @@ class YModemSender
                     auto paddingBuff = new ubyte[](cast(ubyte) Control.CPMEOF);
                     paddingBuff.length = blockSize - remaining;
 
-                    sendBlock(sliceToSend ~ paddingBuff, validAnswers);
+                    sendBlock(sliceToSend ~ paddingBuff, ACK);
                 }
 
                 currByte = currEndByte;
@@ -85,7 +86,7 @@ class YModemSender
         }
 
         // End of file transfer
-        sendBlock([cast(ubyte) Control.EOT], [Control.ACK]);
+        sendBlock([cast(ubyte) Control.EOT], ACK);
     }
 
     private void sendYModemHeaderBlock(string filename, size_t filesize)
@@ -97,7 +98,7 @@ class YModemSender
         immutable(char)* stringz = blockContent.toStringz;
         ubyte* bytes = cast(ubyte*) stringz;
 
-        sendBlock(bytes[0 .. blockContent.length], [Control.ACK]);
+        sendBlock(bytes[0 .. blockContent.length], ACK);
     }
 
     private void sendBlock(in ubyte[] blockData, in Control[] validAnswers)
