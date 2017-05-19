@@ -190,6 +190,56 @@ class YModemSender
             sendData(orderedCRC);
     }
 
+    private Control sendChunkWithConfirm(in ubyte[] data, in Control validAnswers)
+    {
+        // send
+        { // TODO: тут надо разобраться
+            ubyte errcnt = MAXERRORS;
+
+            while(errcnt > 0)
+            {
+                auto r = sendData(data);
+
+                if(r)
+                    break;
+                else
+                    errcnt--;
+            }
+        }
+
+        // receive control symbol
+        {
+            Control ctlSymbol;
+            static ubyte recvErrCnt;
+
+            try
+            {
+                if(currBlockNum == 0)
+                    ctlSymbol = waitFor([Control.ACK, Control.NAK, Control.ST_C]);
+                else
+                    ctlSymbol = waitFor([Control.ACK, Control.NAK]);
+            }
+            catch(RecvException e)
+            {
+                ctlSymbol = Control.NAK;
+            }
+
+            if(ctlSymbol == Control.ACK || ctlSymbol == Control.ST_C)
+            {
+                recvErrCnt = 0;
+            }
+            else
+            {
+                recvErrCnt++;
+
+                if(recvErrCnt >= MAXERRORS)
+                    throw new YModemException("Control symbol receiver reached maximum error count", __FILE__, __LINE__);
+            }
+
+            return ctlSymbol;
+        }
+    }
+
     private Control waitFor(in Control[] ctls)
     {
         Control recv = receiveControlSymbol();
