@@ -272,10 +272,14 @@ unittest
     import std.digest.digest: toHexString;
 
     {
+        sender.send("unittest.bin", [1, 2, 3, 4, 5]);
+        sended.length = 0;
+    }
+
+    {
+        sender.currBlockNum = 0;
         sender.sendYModemHeaderBlock("bbcsched.txt", 6347);
         assert(sended.toHexString == "0200FF62626373636865642E747874203633343792F8");
         sended.length = 0;
     }
-
-    sender.send("unittest.bin", [1, 2, 3, 4, 5]);
 }
