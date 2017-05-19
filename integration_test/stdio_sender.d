@@ -12,7 +12,7 @@ int main(string[] args)
     string filename;
     getopt(args, "filename", &filename);
 
-    const ubyte[] fileContent = cast(ubyte[]) read(filename);
+    ubyte[] fileContent = cast(ubyte[]) read(filename);
 
     bool toStdout(const ubyte[] toSend)
     {

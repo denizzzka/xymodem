@@ -43,7 +43,7 @@ class YModemSender
     void send
     (
         in string filename,
-        in ubyte[] fileData
+        ubyte[] fileData
     )
     {
         /*
@@ -85,29 +85,12 @@ class YModemSender
             else
             {
                 const size_t remaining = fileData.length - currByte;
-
-                size_t blockSize;
-
-                if(remaining <= 128)
-                    blockSize = 128;
-                else
-                    blockSize = 1024;
-
+                const size_t blockSize =  remaining <= 128 ? 128 : 1024;
                 currEndByte = currByte + (remaining > blockSize ? blockSize : remaining);
-                const sliceToSend = fileData[currByte .. currEndByte];
 
-                if(remaining == blockSize)
-                {
-                    sendBlock(sliceToSend, ACK);
-                }
-                else
-                {
-                    // need pading
-                    auto paddingBuff = new ubyte[](cast(ubyte) Control.CPMEOF);
-                    paddingBuff.length = blockSize - remaining;
+                ubyte[] sliceToSend = fileData[currByte .. currEndByte];
 
-                    sendBlock(sliceToSend ~ paddingBuff, ACK);
-                }
+                sendBlock(blockSize, sliceToSend, ACK);
 
                 currByte = currEndByte;
             }
@@ -116,7 +99,7 @@ class YModemSender
         }
 
         // End of file transfer
-        sendBlock([cast(ubyte) Control.EOT], ACK);
+        sendChunkWithConfirm([cast(ubyte) Control.EOT], ACK);
     }
 
     private void sendYModemHeaderBlock(string filename, size_t filesize)
@@ -127,11 +110,14 @@ class YModemSender
         string blockContent = filename ~ ' ' ~ filesize.to!string;
         immutable(char)* stringz = blockContent.toStringz;
         ubyte* bytes = cast(ubyte*) stringz;
+        const size_t blockSize =  blockContent.length <= 128 ? 128 : 1024;
 
-        sendBlock(bytes[0 .. blockContent.length], ACK);
+        sendBlock(blockSize, bytes[0 .. blockContent.length], ACK);
     }
 
-    private void sendBlock(in ubyte[] blockData, in Control[] validAnswers)
+    /// Sends 128 or 1024 B block.
+    /// Uses blockData without padding!
+    private void sendBlock(in size_t blockSize, ubyte[] blockData, in Control[] validAnswers)
     {
         import xymodem.crc: crc16;
         import std.bitmanip: nativeToLittleEndian;
@@ -141,6 +127,15 @@ class YModemSender
             currBlockNum,
             0xFF - currBlockNum
         ];
+
+        if(blockData.length != blockSize)
+        {
+            // need pading
+            auto paddingBuff = new ubyte[](cast(ubyte) Control.CPMEOF);
+            paddingBuff.length = blockSize - blockData.length;
+
+            blockData ~= paddingBuff;
+        }
 
         ushort crc;
         crc16(crc, blockData);
@@ -293,7 +288,7 @@ unittest
     {
         sender.currBlockNum = 0;
         sender.sendYModemHeaderBlock("bbcsched.txt", 6347);
-        assert(sended.toHexString == "0200FF62626373636865642E747874203633343792F8");
+        assert(sended.toHexString == "0200FF62626373636865642E747874203633343700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000032F2");
         sended.length = 0;
     }
 }
