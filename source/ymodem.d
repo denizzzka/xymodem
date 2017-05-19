@@ -90,7 +90,7 @@ class YModemSender
                     if(sendErrCnt >= MAXERRORS)
                         throw new YModemException("Sender reached maximum error count", __FILE__, __LINE__);
 
-                    continue;
+                    continue; // retry sending
                 }
             }
 
@@ -98,10 +98,17 @@ class YModemSender
             {
                 Control ctlSymbol;
 
-                if(currBlockNum == 0)
-                    ctlSymbol = waitFor([Control.ACK, Control.NAK, Control.ST_C]);
-                else
-                    ctlSymbol = waitFor([Control.ACK, Control.NAK]);
+                try
+                {
+                    if(currBlockNum == 0)
+                        ctlSymbol = waitFor([Control.ACK, Control.NAK, Control.ST_C]);
+                    else
+                        ctlSymbol = waitFor([Control.ACK, Control.NAK]);
+                }
+                catch(RecvException e)
+                {
+                    ctlSymbol = Control.NAK; // mark reply as erroneous
+                }
 
                 if(ctlSymbol == Control.NAK)
                 {
@@ -129,7 +136,10 @@ class YModemSender
             {
                 sendData(buff);
 
-                symbol = waitFor([Control.ACK, Control.NAK]);
+                try
+                    symbol = waitFor([Control.ACK, Control.NAK]);
+                catch(RecvException e)
+                    continue; // retry sending EOT
 
                 if(symbol == Control.ACK)
                 {
@@ -182,7 +192,7 @@ class YModemSender
 
     private Control waitFor(in Control[] ctls)
     {
-        Control recv = receiveContrloSymbol();
+        Control recv = receiveControlSymbol();
 
         foreach(c; ctls)
         {
@@ -193,29 +203,17 @@ class YModemSender
         throw new YModemException("Received "~recv.to!string~", but expected "~ctls.to!string, __FILE__, __LINE__);
     }
 
-    private Control receiveContrloSymbol()
+    private Control receiveControlSymbol()
     {
-        ubyte[] r;
-        size_t errcnt;
+        ubyte[] r = recvData(BLOCK_TIMEOUT);
 
-        while(true)
-        {
-            r = recvData(BLOCK_TIMEOUT);
+        if(r.length == 0)
+            throw new RecvException("Control symbol isn't received", __FILE__, __LINE__);
 
-            if(r.length != 0)
-            {
-                break;
-            }
-            else
-            {
-                errcnt++;
+        if(r.length != 1)
+            throw new RecvException("Reply with more than 1 octet received", __FILE__, __LINE__);
 
-                if(errcnt >= MAXERRORS)
-                    throw new YModemException("Too many errors on receive", __FILE__, __LINE__);
-            }
-        }
-
-        return cast(Control) r[$-1];
+        return cast(Control) r[0];
     }
 }
 
@@ -259,7 +257,7 @@ unittest
 
     ubyte[] receiveFromLine(uint timeout)
     {
-        ubyte[] b = [ Control.ACK, Control.ACK ];
+        ubyte[] b = [ Control.ACK ];
 
         return b;
     }
