@@ -40,6 +40,9 @@ int main(string[] args)
                 ret ~= c.to!ubyte;
         }
 
+        //~ import std.stdio;
+        //~ writeln("Received by sender: ", ret);
+
         return ret;
     }
 
@@ -62,7 +65,7 @@ int main(string[] args)
             &toStdout
         );
 
-    sender.send(filename, fileContent);
+    sender.send("test_result_file.bin", fileContent);
 
     return 0;
 }
