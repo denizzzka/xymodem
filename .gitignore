@@ -1,0 +1,8 @@
+bin/*
+docs/*
+docs.json
+*.o
+*.obj
+.dub
+.directory
+dub.selections.json
