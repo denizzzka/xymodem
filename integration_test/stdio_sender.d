@@ -23,9 +23,9 @@ int main(string[] args)
         return true;
     }
 
-    ubyte[] fromStdin()
+    ubyte[] fromStdin(uint timeout)
     {
-        Thread.sleep(dur!("msecs")(500));
+        Thread.sleep(dur!("msecs")(timeout));
 
         ubyte[] ret;
 

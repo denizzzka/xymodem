@@ -3,7 +3,7 @@ module xymodem.ymodem;
 import xymodem.exception;
 import std.conv: to;
 
-alias RecvCallback = ubyte[] delegate();
+alias RecvCallback = ubyte[] delegate(uint timeoutMsecs);
 alias SendCallback = bool delegate(const ubyte[] data); /// Returns: true if send was successful
 
 class YModemSender
@@ -200,7 +200,7 @@ class YModemSender
 
         while(true)
         {
-            r = recvData();
+            r = recvData(BLOCK_TIMEOUT);
 
             if(r.length != 0)
             {
@@ -257,7 +257,7 @@ unittest
         return true;
     }
 
-    ubyte[] receiveFromLine()
+    ubyte[] receiveFromLine(uint timeout)
     {
         ubyte[] b = [ Control.ACK, Control.ACK ];
 
