@@ -1,8 +1,11 @@
 #!/bin/bash
 
 
-socat -v \
+socat -x \
 EXEC:'rb --ymodem' \
-EXEC:'./xymodem_integration_test --filename=integration_test/2KiB_random.bin'
+EXEC:'sb --1k --ymodem integration_test/bbcsched.txt'
 
-#~ EXEC:'sb --ymodem integration_test/2KiB_random.bin'
+#~ socat -x \
+#~ EXEC:'rb --ymodem' \
+#~ EXEC:'./xymodem_integration_test --filename=integration_test/2KiB_random.bin'
+
