@@ -176,7 +176,7 @@ class YModemSender
 
     private Control receiveTheseControlSymbols(in Control[] ctls) const
     {
-        const ubyte[] r = recvData(BLOCK_TIMEOUT);
+        const ubyte[] r = recvData(SEND_BLOCK_TIMEOUT);
 
         if(r.length == 0)
             throw new RecvException("Control symbol isn't received", __FILE__, __LINE__);
@@ -210,10 +210,8 @@ private enum Control: ubyte
 
 // Some useful constants
 private immutable ubyte MAXERRORS = 10;
-immutable BLOCK_TIMEOUT = 1000;
-immutable REQUEST_TIMEOUT = 3000;
-immutable WAIT_FOR_RECEIVER_TIMEOUT = 60_000;
-immutable SEND_BLOCK_TIMEOUT = 10_000;
+private immutable WAIT_FOR_RECEIVER_TIMEOUT = 60_000;
+private immutable SEND_BLOCK_TIMEOUT = 10_000;
 
 unittest
 {
