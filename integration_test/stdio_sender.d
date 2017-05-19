@@ -26,8 +26,6 @@ int main(string[] args)
 
     ubyte[] fromStdin(uint timeout)
     {
-        Thread.sleep(dur!("msecs")(1000)); // not using timeout for faster testing results
-
         ubyte[] ret;
 
         while(true)
@@ -35,7 +33,12 @@ int main(string[] args)
             int c = getchar();
 
             if(c == EOF)
-                break;
+            {
+                Thread.sleep(dur!("msecs")(500)); // not using timeout for faster testing results
+
+                if(ret.length > 0)
+                    break;
+            }
             else
                 ret ~= c.to!ubyte;
         }
