@@ -77,7 +77,11 @@ class YModemSender
 
                     sendBlock(sliceToSend ~ paddingBuff, validAnswers);
                 }
+
+                currByte = currEndByte;
             }
+
+            currBlockNum++;
         }
 
         // End of file transfer
@@ -234,8 +238,6 @@ unittest
 
         return b;
     }
-
-    void doTimeout(ubyte) {}
 
     auto sender = new YModemSender(
             &receiveFromLine,
