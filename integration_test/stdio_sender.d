@@ -5,6 +5,7 @@ import std.conv: to;
 import std.stdio;
 import cstdio = core.stdc.stdio;
 import core.thread;
+import std.socket;
 
 int main(string[] args)
 {
@@ -15,7 +16,7 @@ int main(string[] args)
 
     bool toStdout(const ubyte[] toSend)
     {
-        Thread.sleep(dur!("msecs")(500));
+        //~ Thread.sleep(dur!("msecs")(500));
 
         write(cast(string) toSend);
         stdout.flush();
@@ -25,22 +26,40 @@ int main(string[] args)
 
     ubyte[] fromStdin(uint timeout)
     {
-        Thread.sleep(dur!("msecs")(timeout));
+        Thread.sleep(dur!("msecs")(1000)); // not using timeout for faster testing results
 
         ubyte[] ret;
 
         while(true)
         {
-            auto c = getchar();
+            int c = getchar();
 
-            if(c != EOF)
-                ret ~= c.to!ubyte;
-            else
+            if(c == EOF)
                 break;
+            else
+                ret ~= c.to!ubyte;
         }
 
-        //~ ret = [ 0x06 /*ACK*/, 0x06 /*ACK*/ ];
         return ret;
+    }
+
+    // Set stdio into non-blocking mode
+    {
+        import core.sys.posix.fcntl;
+
+        int x = fcntl(stdin.fileno, F_GETFL, 0);
+
+        if (x == -1) {
+            writeln("fcntl error");
+            return 1;
+        }
+
+        x |= O_NONBLOCK;
+
+        int r = fcntl(stdin.fileno, F_SETFL, x);
+
+        if (r == -1)
+            writeln("fcntl set error");
     }
 
     auto sender = new YModemSender(
