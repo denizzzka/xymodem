@@ -17,6 +17,18 @@ class YModemSender
 
     private immutable Control[] ACK = [Control.ACK];
 
+    /// Returns: bytes count for the current/latest file transfer
+    size_t bytesSent() const
+    {
+        return currByte;
+    }
+
+    /// Abort current transfer
+    void abort()
+    {
+        isAborting = true;
+    }
+
     this
     (
         RecvCallback recvCb,
@@ -40,6 +52,8 @@ class YModemSender
          * Systems that do not distinguish between upper and lower case
          * letters in filenames shall send the pathname in lower case only.
          */
+
+        // TODO: abort transfer support
 
         // Waiting for initial C symbol
         while(true)
