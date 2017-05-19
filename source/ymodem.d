@@ -41,6 +41,22 @@ class YModemSender
          * letters in filenames shall send the pathname in lower case only.
          */
 
+        // Waiting for initial C symbol
+        while(true)
+        {
+            try
+                receiveTheseControlSymbols([Control.ST_C], WAIT_FOR_RECEIVER_TIMEOUT);
+            catch(RecvException e)
+            {
+                if(e.type == RecvErrType.NO_REPLY)
+                    throw new YModemException("Receiver initial reply timeout", __FILE__, __LINE__);
+                else
+                    continue;
+            }
+
+            break;
+        }
+
         currBlockNum = 0;
         currByte = 0;
         size_t currEndByte = 0;
@@ -128,7 +144,7 @@ class YModemSender
         {
             sendChunk(data);
 
-            if(recvConfirm(validAnswers))
+            if(recvConfirm(validAnswers, SEND_BLOCK_TIMEOUT))
             {
                 break;
             }
@@ -164,25 +180,25 @@ class YModemSender
         }
     }
 
-    private bool recvConfirm(in Control[] validAnswers) const
+    private bool recvConfirm(in Control[] validAnswers, uint timeout) const
     {
         try
-            receiveTheseControlSymbols(validAnswers);
+            receiveTheseControlSymbols(validAnswers, timeout);
         catch(RecvException e)
             return false;
 
         return true;
     }
 
-    private Control receiveTheseControlSymbols(in Control[] ctls) const
+    private Control receiveTheseControlSymbols(in Control[] ctls, uint timeout) const
     {
-        const ubyte[] r = recvData(SEND_BLOCK_TIMEOUT);
+        const ubyte[] r = recvData(timeout);
 
         if(r.length == 0)
-            throw new RecvException("Control symbol isn't received", __FILE__, __LINE__);
+            throw new RecvException(RecvErrType.NO_REPLY, "Control symbol isn't received", __FILE__, __LINE__);
 
         if(r.length != 1)
-            throw new RecvException("Reply with more than 1 octet received", __FILE__, __LINE__);
+            throw new RecvException(RecvErrType.MORE_THAN_1_OCTET, "Reply with more than 1 octet received", __FILE__, __LINE__);
 
         import std.algorithm.searching: canFind;
 
@@ -191,7 +207,7 @@ class YModemSender
         if(canFind(ctls, b))
             return b;
 
-        throw new RecvException("Received "~r.to!string~", but expected "~ctls.to!string, __FILE__, __LINE__);
+        throw new RecvException(RecvErrType.NOT_EXPECTED, "Received "~r.to!string~", but expected "~ctls.to!string, __FILE__, __LINE__);
     }
 }
 
@@ -233,7 +249,17 @@ unittest
 
     ubyte[] receiveFromLine(uint timeout)
     {
-        ubyte[] b = [ Control.ACK ];
+        static isFirstBlock = true;
+
+        ubyte[] b;
+
+        if(isFirstBlock)
+        {
+            b = [ Control.ST_C ];
+            isFirstBlock = false;
+        }
+        else
+            b = [ Control.ACK ];
 
         return b;
     }

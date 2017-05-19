@@ -10,10 +10,23 @@ class YModemException : Exception
     }
 }
 
-package class RecvException : YModemException
+package:
+
+enum RecvErrType
 {
-    this(string msg, string file, size_t line) pure @safe
+    NOT_USED_TYPE,
+    NO_REPLY,
+    MORE_THAN_1_OCTET,
+    NOT_EXPECTED
+}
+
+class RecvException : YModemException
+{
+    RecvErrType type;
+
+    this(RecvErrType t, string msg, string file, size_t line) pure @safe
     {
+        type = t;
         super(msg, file, line);
     }
 }
