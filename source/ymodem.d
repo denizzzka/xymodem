@@ -46,44 +46,42 @@ class YModemSender
 
         while(currByte < fileData.length)
         {
-            // Send block
+            if(currBlockNum == 0)
             {
-                if(currBlockNum == 0)
+                sendYModemHeaderBlock(filename, fileData.length);
+            }
+            else
+            {
+                const size_t remaining = fileData.length - currByte;
+
+                size_t blockSize;
+
+                if(remaining <= 128)
+                    blockSize = 128;
+                else
+                    blockSize = 1024;
+
+                currEndByte = currByte + (remaining > blockSize ? blockSize : remaining);
+                const sliceToSend = fileData[currByte .. currEndByte];
+                immutable Control[] validAnswers = [Control.ACK];
+
+                if(remaining == blockSize)
                 {
-                    sendYModemHeaderBlock(filename, fileData.length);
+                    sendBlock(sliceToSend, validAnswers);
                 }
                 else
                 {
-                    const size_t remaining = fileData.length - currByte;
+                    // need pading
+                    auto paddingBuff = new ubyte[](cast(ubyte) Control.CPMEOF);
+                    paddingBuff.length = blockSize - remaining;
 
-                    size_t blockSize;
-
-                    if(remaining <= 128)
-                        blockSize = 128;
-                    else
-                        blockSize = 1024;
-
-                    currEndByte = currByte + (remaining > blockSize ? blockSize : remaining);
-                    const sliceToSend = fileData[currByte .. currEndByte];
-
-                    if(remaining != blockSize)
-                    {
-                        // need pading
-                        auto paddingBuff = new ubyte[](cast(ubyte) Control.CPMEOF);
-                        paddingBuff.length = blockSize - remaining;
-
-                        sendBlock(sliceToSend ~ paddingBuff);
-                    }
-                    else
-                    {
-                        sendBlock(sliceToSend);
-                    }
+                    sendBlock(sliceToSend ~ paddingBuff, validAnswers);
                 }
             }
         }
 
         // End of file transfer
-        sendBlock([cast(ubyte) Control.EOT]);
+        sendBlock([cast(ubyte) Control.EOT], [Control.ACK]);
     }
 
     private void sendYModemHeaderBlock(string filename, size_t filesize)
@@ -95,10 +93,10 @@ class YModemSender
         immutable(char)* stringz = blockContent.toStringz;
         ubyte* bytes = cast(ubyte*) stringz;
 
-        sendBlock(bytes[0 .. blockContent.length]);
+        sendBlock(bytes[0 .. blockContent.length], [Control.ACK]);
     }
 
-    private void sendBlock(in ubyte[] blockData)
+    private void sendBlock(in ubyte[] blockData, in Control[] validAnswers)
     {
         import xymodem.crc: crc16;
         import std.bitmanip: nativeToLittleEndian;
@@ -114,7 +112,7 @@ class YModemSender
 
         ubyte[2] orderedCRC = nativeToLittleEndian(crc);
 
-        sendChunkWithConfirm(header~blockData~orderedCRC, [Control.ACK]);
+        sendChunkWithConfirm(header~blockData~orderedCRC, validAnswers);
     }
 
     private void sendChunkWithConfirm(in ubyte[] data, in Control[] validAnswers) const
