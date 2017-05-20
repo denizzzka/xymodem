@@ -167,24 +167,13 @@ class YModemSender
 
     private void sendChunk(in ubyte[] data) const
     {
-        ubyte errcnt = 0;
-
-        while(true)
+        for(ubyte errcnt = 0; errcnt < MAXERRORS; errcnt++)
         {
-            auto r = sendData(data);
-
-            if(r)
-            {
-                break;
-            }
-            else
-            {
-                errcnt++;
-
-                if(errcnt >= MAXERRORS)
-                    throw new YModemException("Sender reached maximum error count", __FILE__, __LINE__);
-            }
+            if(sendData(data))
+                return;
         }
+
+        throw new YModemException("Sender reached maximum error count", __FILE__, __LINE__);
     }
 
     private bool recvConfirm(in Control[] validAnswers, uint timeout) const
