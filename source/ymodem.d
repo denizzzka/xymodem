@@ -99,20 +99,13 @@ class YModemSender
     private void waitForC() const
     {
         // Waiting for C symbol
-        while(true)
+        for(auto i = 0; i < MAXERRORS; i++)
         {
-            try
-                receiveTheseControlSymbols([Control.ST_C], WAIT_FOR_RECEIVER_TIMEOUT);
-            catch(RecvException e)
-            {
-                if(e.type == RecvErrType.NO_REPLY)
-                    throw new YModemException("Receiver reply timeout", __FILE__, __LINE__);
-                else
-                    continue;
-            }
-
-            break;
+            if(recvConfirm([Control.ST_C], WAIT_FOR_RECEIVER_TIMEOUT))
+                return;
         }
+
+        throw new YModemException("Receiver reply timeout", __FILE__, __LINE__);
     }
 
     private void sendYModemHeaderBlock(string filename, size_t filesize)

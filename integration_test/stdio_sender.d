@@ -3,9 +3,8 @@ import std.getopt;
 import std.file;
 import std.conv: to;
 import std.stdio;
-import cstdio = core.stdc.stdio;
 import core.thread;
-import std.socket;
+import std.typecons;
 
 int main(string[] args)
 {
@@ -24,27 +23,16 @@ int main(string[] args)
         return true;
     }
 
-    ubyte[] fromStdin(uint timeout)
+    Nullable!ubyte fromStdin(uint timeout)
     {
-        ubyte[] ret;
+        Nullable!ubyte ret;
 
-        while(true)
-        {
-            int c = getchar();
+        int c = getchar();
 
-            if(c == EOF)
-            {
-                Thread.sleep(dur!("msecs")(500)); // not using timeout for faster testing results
-
-                if(ret.length > 0)
-                    break;
-            }
-            else
-                ret ~= c.to!ubyte;
-        }
-
-        //~ import std.stdio;
-        //~ writeln("Received by sender: ", ret);
+        if(c == EOF)
+            Thread.sleep(dur!("msecs")(1000)); // not using timeout for faster testing results
+        else
+            ret = c.to!ubyte;
 
         return ret;
     }
