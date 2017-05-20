@@ -2,9 +2,15 @@ module xymodem.ymodem;
 
 import xymodem.exception;
 import std.conv: to;
+import std.typecons: Nullable, nullable;
 
-alias RecvCallback = ubyte[] delegate(uint timeoutMsecs);
-alias SendCallback = bool delegate(const ubyte[] data); /// Returns: true if send was successful
+/// Reads one octet from transmission line
+/// Returns: isNull if no data was received for the specified time
+alias RecvCallback = Nullable!ubyte delegate(uint timeoutMsecs);
+
+/// Send bytes into transmission line
+/// Returns: true if send was successful
+alias SendCallback = bool delegate(const ubyte[] data);
 
 class YModemSender
 {
@@ -208,22 +214,23 @@ class YModemSender
 
     private Control receiveTheseControlSymbols(in Control[] ctls, uint timeout) const
     {
-        const ubyte[] r = recvData(timeout);
-
-        if(r.length == 0)
-            throw new RecvException(RecvErrType.NO_REPLY, "Control symbol isn't received", __FILE__, __LINE__);
-
-        if(r.length != 1)
-            throw new RecvException(RecvErrType.MORE_THAN_1_OCTET, "Reply with more than 1 octet received", __FILE__, __LINE__);
-
         import std.algorithm.searching: canFind;
 
-        Control b = cast(Control) r[0];
+        Nullable!ubyte r = recvData(timeout);
 
-        if(canFind(ctls, b))
-            return b;
+        if(r.isNull)
+        {
+            throw new RecvException(RecvErrType.NO_REPLY, "Control symbol isn't received", __FILE__, __LINE__);
+        }
+        else
+        {
+            Control b = cast(Control) r.get;
 
-        throw new RecvException(RecvErrType.NOT_EXPECTED, "Received "~r.to!string~", but expected "~ctls.to!string, __FILE__, __LINE__);
+            if(!canFind(ctls, b))
+                throw new RecvException(RecvErrType.NOT_EXPECTED, "Received "~b.to!string~", but expected "~ctls.to!string, __FILE__, __LINE__);
+            else
+                return b;
+        }
     }
 }
 
@@ -290,9 +297,9 @@ unittest
         return true;
     }
 
-    ubyte[] receiveFromLine(uint timeout)
+    Nullable!ubyte receiveFromLine(uint timeout)
     {
-        return ['C'];
+        return nullable!ubyte('C');
     }
 
     auto sender = new YModemSender(
