@@ -114,7 +114,7 @@ class YModemSender
                 return;
         }
 
-        throw new YModemException("Receiver reply timeout", __FILE__, __LINE__);
+        throw new YModemException("Control symbol receiver reached maximum error count", __FILE__, __LINE__);
     }
 
     private void sendYModemHeaderBlock(string filename, size_t filesize)
@@ -171,7 +171,7 @@ class YModemSender
                 return;
         }
 
-        throw new YModemException("Control symbol receiver reached maximum error count", __FILE__, __LINE__);
+        throw new YModemException("Confirmation symbol receiver reached maximum error count", __FILE__, __LINE__);
     }
 
     private void sendChunk(in ubyte[] data) const
@@ -182,7 +182,7 @@ class YModemSender
                 return;
         }
 
-        throw new YModemException("Sender reached maximum error count", __FILE__, __LINE__);
+        throw new YModemException("Transmission line sender reached maximum error count", __FILE__, __LINE__);
     }
 
     private bool recvConfirm(in Control[] validAnswers, uint timeout) const
@@ -232,8 +232,8 @@ private enum Control: ubyte
 
 // Some useful constants
 private immutable ubyte MAXERRORS = 10;
-private immutable WAIT_FOR_RECEIVER_TIMEOUT = 60_000;
-private immutable SEND_BLOCK_TIMEOUT = 10_000;
+private immutable uint WAIT_FOR_RECEIVER_TIMEOUT = 60_000;
+private immutable uint SEND_BLOCK_TIMEOUT = 10_000;
 
 unittest
 {
