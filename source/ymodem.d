@@ -94,8 +94,16 @@ class YModemSender
             currBlockNum++;
         }
 
-        // End of file transfer
-        sendChunkWithConfirm([cast(ubyte) Control.EOT], ACK);
+        // End of YMODEM batch transmission session
+        {
+            sendChunkWithConfirm([cast(ubyte) Control.EOT], ACK);
+
+            waitForSymbol(Control.ST_C, WAIT_FOR_RECEIVER_TIMEOUT);
+
+            ubyte[] b = new ubyte[128];
+            currBlockNum = 0;
+            sendBlock(128, b, [Control.ACK]);
+        }
     }
 
     private void waitForSymbol(Control cntl, uint timeout) const
@@ -178,18 +186,10 @@ class YModemSender
 
     private bool recvConfirm(in Control[] validAnswers, uint timeout) const
     {
-        import std.stdio;
-
         try
             receiveTheseControlSymbols(validAnswers, timeout);
         catch(RecvException e)
-        {
-            stderr.writeln(e.msg, ". Should be: ", validAnswers);
-
             return false;
-        }
-
-        stderr.writeln("Symbol ", validAnswers, " received");
 
         return true;
     }
