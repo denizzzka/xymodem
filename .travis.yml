@@ -1,0 +1,16 @@
+dist: trusty
+
+language: d
+
+d:
+  - dmd
+  - ldc
+
+addons:
+  apt:
+    packages:
+      - lrzsz
+      - socat
+
+script:
+  - ./test.sh
