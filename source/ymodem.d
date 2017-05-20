@@ -85,8 +85,7 @@ class YModemSender
             else
             {
                 const size_t remaining = fileData.length - currByte;
-                //~ const size_t blockSize =  remaining <= 128 ? 128 : 1024;
-                const size_t blockSize =  1024;
+                const size_t blockSize =  remaining <= 128 ? 128 : 1024;
                 currEndByte = currByte + (remaining > blockSize ? blockSize : remaining);
 
                 ubyte[] sliceToSend = fileData[currByte .. currEndByte];
@@ -111,8 +110,7 @@ class YModemSender
         string blockContent = filename ~ ' ' ~ filesize.to!string;
         immutable(char)* stringz = blockContent.toStringz;
         ubyte* bytes = cast(ubyte*) stringz;
-        //~ const size_t blockSize =  blockContent.length <= 128 ? 128 : 1024;
-        const size_t blockSize =  1024;
+        const size_t blockSize =  blockContent.length <= 128 ? 128 : 1024;
 
         sendBlock(blockSize, bytes[0 .. blockContent.length], ACK);
     }
