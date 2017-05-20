@@ -8,7 +8,7 @@ import std.typecons: Nullable, nullable;
 /// Returns: isNull if no data was received for the specified time
 alias RecvCallback = Nullable!ubyte delegate(uint timeoutMsecs);
 
-/// Send bytes into transmission line
+/// Send octets into transmission line
 /// Returns: true if send was successful
 alias SendCallback = bool delegate(const ubyte[] data);
 
