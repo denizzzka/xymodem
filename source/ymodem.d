@@ -62,7 +62,7 @@ class YModemSender
         // TODO: abort transfer support
 
         // Waiting for initial C symbol
-        waitForSymbol(Control.ST_C);
+        waitForSymbol(Control.ST_C, WAIT_FOR_RECEIVER_TIMEOUT);
 
         currBlockNum = 0;
         currByte = 0;
@@ -74,7 +74,9 @@ class YModemSender
             if(currBlockNum == 0)
             {
                 sendYModemHeaderBlock(filename, fileData.length);
-                waitForSymbol(Control.ST_C); // After ACK receiver shall immediately send 'C'
+
+                // After ACK receiver shall immediately send 'C'
+                waitForSymbol(Control.ST_C, SEND_BLOCK_TIMEOUT);
             }
             else
             {
@@ -96,11 +98,11 @@ class YModemSender
         sendChunkWithConfirm([cast(ubyte) Control.EOT], ACK);
     }
 
-    private void waitForSymbol(Control cntl) const
+    private void waitForSymbol(Control cntl, uint timeout) const
     {
         for(auto i = 0; i < MAXERRORS; i++)
         {
-            if(recvConfirm([cntl], WAIT_FOR_RECEIVER_TIMEOUT))
+            if(recvConfirm([cntl], timeout))
                 return;
         }
 
