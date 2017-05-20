@@ -49,7 +49,7 @@ class YModemSender
     void send
     (
         in string filename,
-        ubyte[] fileData
+        in ubyte[] fileData
     )
     {
         /*
@@ -84,7 +84,7 @@ class YModemSender
                 const size_t blockSize =  remaining <= 128 ? 128 : 1024;
                 currEndByte = currByte + (remaining > blockSize ? blockSize : remaining);
 
-                ubyte[] sliceToSend = fileData[currByte .. currEndByte];
+                const ubyte[] sliceToSend = fileData[currByte .. currEndByte];
 
                 sendBlock(blockSize, sliceToSend, ACK);
 
@@ -133,7 +133,7 @@ class YModemSender
 
     /// Sends 128 or 1024 B block.
     /// blockData without padding!
-    private void sendBlock(in size_t blockSize, ubyte[] blockData, in Control[] validAnswers)
+    private void sendBlock(in size_t blockSize, in ubyte[] blockData, in Control[] validAnswers)
     {
         import xymodem.crc: crc16;
         import std.bitmanip: nativeToBigEndian;
@@ -144,20 +144,21 @@ class YModemSender
             0xFF - currBlockNum
         ];
 
+        ubyte[] paddingBuff;
+
         if(blockData.length != blockSize)
         {
             // need pading
-            auto paddingBuff = new ubyte[](cast(ubyte) Control.CPMEOF);
+            paddingBuff = new ubyte[](cast(ubyte) Control.CPMEOF);
             paddingBuff.length = blockSize - blockData.length;
-
-            blockData ~= paddingBuff;
         }
 
         ushort crc;
         crc16(crc, blockData);
+        crc16(crc, paddingBuff);
         ubyte[2] orderedCRC = nativeToBigEndian(crc);
 
-        sendChunkWithConfirm(header~blockData~orderedCRC, validAnswers);
+        sendChunkWithConfirm(header~blockData~paddingBuff~orderedCRC, validAnswers);
     }
 
     private void sendChunkWithConfirm(in ubyte[] data, in Control[] validAnswers) const

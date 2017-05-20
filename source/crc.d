@@ -13,11 +13,6 @@ module xymodem.crc;
  *      buff =  bytes for calculation
  */
 void crc16(ref ushort crc, in ubyte[] buff) pure nothrow @safe @nogc
-in
-{
-    assert(buff.length > 0);
-}
-body
 {
     immutable ushort poly = 0x1021; // XMODEM CRC polynomic
 
