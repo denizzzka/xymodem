@@ -56,20 +56,7 @@ class YModemSender
         // TODO: abort transfer support
 
         // Waiting for initial C symbol
-        while(true)
-        {
-            try
-                receiveTheseControlSymbols([Control.ST_C], WAIT_FOR_RECEIVER_TIMEOUT);
-            catch(RecvException e)
-            {
-                if(e.type == RecvErrType.NO_REPLY)
-                    throw new YModemException("Receiver initial reply timeout", __FILE__, __LINE__);
-                else
-                    continue;
-            }
-
-            break;
-        }
+        waitForC();
 
         currBlockNum = 0;
         currByte = 0;
@@ -81,6 +68,7 @@ class YModemSender
             if(currBlockNum == 0)
             {
                 sendYModemHeaderBlock(filename, fileData.length);
+                //~ waitForC(); // After ACK receiver shall immediately send 'C'
             }
             else
             {
@@ -100,6 +88,25 @@ class YModemSender
 
         // End of file transfer
         sendChunkWithConfirm([cast(ubyte) Control.EOT], ACK);
+    }
+
+    void waitForC() const
+    {
+        // Waiting for C symbol
+        while(true)
+        {
+            try
+                receiveTheseControlSymbols([Control.ST_C], WAIT_FOR_RECEIVER_TIMEOUT);
+            catch(RecvException e)
+            {
+                if(e.type == RecvErrType.NO_REPLY)
+                    throw new YModemException("Receiver reply timeout", __FILE__, __LINE__);
+                else
+                    continue;
+            }
+
+            break;
+        }
     }
 
     private void sendYModemHeaderBlock(string filename, size_t filesize)
