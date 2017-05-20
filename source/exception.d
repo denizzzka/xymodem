@@ -14,7 +14,7 @@ package:
 
 enum RecvErrType
 {
-    NOT_USED_TYPE,
+    UNUSED,
     NO_REPLY,
     MORE_THAN_1_OCTET,
     NOT_EXPECTED
