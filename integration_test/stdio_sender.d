@@ -5,6 +5,7 @@ import std.conv: to;
 import std.stdio;
 import core.thread;
 import std.typecons;
+import core.time;
 
 int main(string[] args)
 {
@@ -18,21 +19,27 @@ int main(string[] args)
         write(cast(string) toSend);
         stdout.flush();
 
-        Thread.sleep(dur!("msecs")(500)); // FIXME: remove it
-
         return true;
     }
 
     Nullable!ubyte fromStdin(uint timeout)
     {
+        auto startTime = MonoTime.currTime;
+
         Nullable!ubyte ret;
 
-        int c = getchar();
+        while((MonoTime.currTime - startTime).total!"msecs" < timeout)
+        {
+            int c = getchar();
 
-        if(c == EOF)
-            Thread.sleep(dur!("msecs")(1000)); // FIXME: use timeout variable
-        else
-            ret = c.to!ubyte;
+            if(c == EOF)
+                Thread.sleep(dur!"msecs"(50));
+            else
+            {
+                ret = c.to!ubyte;
+                break;
+            }
+        }
 
         return ret;
     }
