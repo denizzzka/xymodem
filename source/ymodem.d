@@ -257,6 +257,7 @@ unittest
         import xymodem.crc;
         import std.bitmanip;
 
+        // Valid block captured from lrzsz interchange
         immutable string textBlock = "01 08 f7 d7 85 78 59 20 01 d3 0d 19 96 57 55 71 2d e5 7d 52 16 b2 51 fe d3 72 7d 6c 3f 31 0f e1 ea 40 18 11 40 74 40 41 b4 22 c2 98 82 d8 70 34 45 8f a8 c7 ab 28 5d 05 24 89 ff f1 1b 27 62 41 4f 62 99 c1 64 bb b8 d1 df 65 d1 43 c1 f8 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 1a 42 47";
 
         const ubyte[] block = textBlock
