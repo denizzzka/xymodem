@@ -100,7 +100,7 @@ class YModemSender
 
     private void waitForSymbol(Control cntl, uint timeout) const
     {
-        for(auto i = 0; i < MAXERRORS; i++)
+        for(ubyte i = 0; i < MAXERRORS; i++)
         {
             if(recvConfirm([cntl], timeout))
                 return;
@@ -154,24 +154,15 @@ class YModemSender
 
     private void sendChunkWithConfirm(in ubyte[] data, in Control[] validAnswers) const
     {
-        ubyte recvErrCnt;
-
-        while(true)
+        for(ubyte recvErrCnt = 0; recvErrCnt < MAXERRORS; recvErrCnt++)
         {
             sendChunk(data);
 
             if(recvConfirm(validAnswers, SEND_BLOCK_TIMEOUT))
-            {
-                break;
-            }
-            else
-            {
-                recvErrCnt++;
-
-                if(recvErrCnt >= MAXERRORS)
-                    throw new YModemException("Control symbol receiver reached maximum error count", __FILE__, __LINE__);
-            }
+                return;
         }
+
+        throw new YModemException("Control symbol receiver reached maximum error count", __FILE__, __LINE__);
     }
 
     private void sendChunk(in ubyte[] data) const
