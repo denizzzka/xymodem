@@ -4,6 +4,7 @@ language: d
 
 d:
   - dmd
+  - ldc
 
 addons:
   apt:

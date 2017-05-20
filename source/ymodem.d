@@ -2,7 +2,7 @@ module xymodem.ymodem;
 
 import xymodem.exception;
 import std.conv: to;
-import std.typecons: Nullable, nullable;
+import std.typecons: Nullable;
 
 /// Reads 1 octet from transmission line
 /// Returns: isNull if no data was received for the specified time
@@ -282,7 +282,7 @@ unittest
 
     Nullable!ubyte receiveFromLine(uint timeout)
     {
-        return nullable!ubyte('C');
+        return Nullable!ubyte('C');
     }
 
     auto sender = new YModemSender(
