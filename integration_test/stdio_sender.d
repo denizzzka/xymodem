@@ -12,7 +12,7 @@ int main(string[] args)
     string filename;
     getopt(args, "filename", &filename);
 
-    ubyte[] fileContent = cast(ubyte[]) read(filename);
+    ubyte[] fileContent = cast(ubyte[]) read("integration_test/"~filename);
 
     bool toStdout(const ubyte[] toSend)
     {
@@ -63,7 +63,7 @@ int main(string[] args)
             &toStdout
         );
 
-    sender.send("test_result_file.bin", fileContent);
+    sender.send(filename, fileContent);
 
     return 0;
 }
