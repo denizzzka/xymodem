@@ -4,7 +4,7 @@ import xymodem.exception;
 import std.conv: to;
 import std.typecons: Nullable, nullable;
 
-/// Reads one octet from transmission line
+/// Reads 1 octet from transmission line
 /// Returns: isNull if no data was received for the specified time
 alias RecvCallback = Nullable!ubyte delegate(uint timeoutMsecs);
 
