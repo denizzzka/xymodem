@@ -178,10 +178,18 @@ class YModemSender
 
     private bool recvConfirm(in Control[] validAnswers, uint timeout) const
     {
+        import std.stdio;
+
         try
             receiveTheseControlSymbols(validAnswers, timeout);
         catch(RecvException e)
+        {
+            stderr.writeln(e.msg, ". Should be: ", validAnswers);
+
             return false;
+        }
+
+        stderr.writeln("Symbol ", validAnswers, " received");
 
         return true;
     }

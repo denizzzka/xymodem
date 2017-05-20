@@ -15,10 +15,10 @@ int main(string[] args)
 
     bool toStdout(const ubyte[] toSend)
     {
-        //~ Thread.sleep(dur!("msecs")(500));
-
         write(cast(string) toSend);
         stdout.flush();
+
+        Thread.sleep(dur!("msecs")(500)); // FIXME: remove it
 
         return true;
     }
@@ -30,7 +30,7 @@ int main(string[] args)
         int c = getchar();
 
         if(c == EOF)
-            Thread.sleep(dur!("msecs")(1000)); // not using timeout for faster testing results
+            Thread.sleep(dur!("msecs")(1000)); // FIXME: use timeout variable
         else
             ret = c.to!ubyte;
 
