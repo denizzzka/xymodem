@@ -10,9 +10,9 @@ diff 2KiB_random.bin integration_test/2KiB_random.bin
 
 socat -x \
 EXEC:'rb --ymodem' \
-EXEC:'./xymodem_integration_test --filename=130B_random.bin'
+EXEC:'./xymodem_integration_test --filename=120B_random.bin'
 
-diff 130B_random.bin integration_test/130B_random.bin
+diff 120B_random.bin integration_test/120B_random.bin
 
 # Reference YMODEM interchange implementation:
 #~ socat -x \
