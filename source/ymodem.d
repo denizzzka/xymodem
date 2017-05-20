@@ -29,11 +29,12 @@ class YModemSender
         return currByte;
     }
 
-    /// Abort current transfer
-    void abort()
-    {
-        isAborting = true;
-    }
+    // TODO: Implement it!
+    //~ /// Abort current transfer
+    //~ void abort()
+    //~ {
+        //~ isAborting = true;
+    //~ }
 
     this
     (
