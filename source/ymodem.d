@@ -68,7 +68,7 @@ class YModemSender
             if(currBlockNum == 0)
             {
                 sendYModemHeaderBlock(filename, fileData.length);
-                //~ waitForC(); // After ACK receiver shall immediately send 'C'
+                waitForC(); // After ACK receiver shall immediately send 'C'
             }
             else
             {
@@ -90,7 +90,7 @@ class YModemSender
         sendChunkWithConfirm([cast(ubyte) Control.EOT], ACK);
     }
 
-    void waitForC() const
+    private void waitForC() const
     {
         // Waiting for C symbol
         while(true)
@@ -291,30 +291,11 @@ unittest
 
     ubyte[] receiveFromLine(uint timeout)
     {
-        static isFirstBlock = true;
-
-        ubyte[] b;
-
-        if(isFirstBlock)
-        {
-            b = [ Control.ST_C ];
-            isFirstBlock = false;
-        }
-        else
-            b = [ Control.ACK ];
-
-        return b;
+        return ['C'];
     }
 
     auto sender = new YModemSender(
             &receiveFromLine,
             &sendToLine,
         );
-
-    import std.digest.digest: toHexString;
-
-    {
-        sender.send("unittest.bin", [1, 2, 3, 4, 5]);
-        sended.length = 0;
-    }
 }
