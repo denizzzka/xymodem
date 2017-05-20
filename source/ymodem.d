@@ -107,9 +107,10 @@ class YModemSender
         import std.conv: to;
         import std.string: toStringz;
 
-        string blockContent = filename ~ ' ' ~ filesize.to!string;
+        string blockContent = filename ~ '\x00' ~ filesize.to!string;
         immutable(char)* stringz = blockContent.toStringz;
         ubyte* bytes = cast(ubyte*) stringz;
+
         const size_t blockSize =  blockContent.length <= 128 ? 128 : 1024;
 
         sendBlock(blockSize, bytes[0 .. blockContent.length], ACK);
