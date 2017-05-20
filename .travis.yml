@@ -13,4 +13,6 @@ addons:
       - socat
 
 script:
+  - dub test
+  - dub build :integration_test
   - ./test.sh
