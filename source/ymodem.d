@@ -1,5 +1,7 @@
 module xymodem.ymodem;
 
+@safe:
+
 import xymodem.exception;
 import std.conv: to;
 import std.typecons: Nullable;
@@ -121,15 +123,30 @@ class YModemSender
     private void sendYModemHeaderBlock(string filename, size_t filesize)
     {
         import std.conv: to;
-        import std.string: toStringz;
 
         string blockContent = filename ~ '\x00' ~ filesize.to!string;
-        immutable(char)* stringz = blockContent.toStringz;
-        ubyte* bytes = cast(ubyte*) stringz;
+
+        ubyte[] bytes = string2ubytesz(blockContent);
 
         const size_t blockSize =  blockContent.length <= 128 ? 128 : 1024;
 
-        sendBlock(blockSize, bytes[0 .. blockContent.length], ACK);
+        sendBlock(blockSize, bytes, ACK);
+    }
+
+    private static ubyte[] string2ubytesz(in string str) pure
+    {
+        import std.ascii;
+        import std.exception;
+
+        ubyte[] bytes;
+
+        foreach(c; str)
+        {
+            enforce(c.isASCII, "Non-ASCII symbol is found");
+            bytes ~= c;
+        }
+
+        return bytes ~ 0x00;
     }
 
     /// Sends 128 or 1024 B block.
