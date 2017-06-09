@@ -14,7 +14,7 @@ int main(string[] args)
 
     ubyte[] fileContent = cast(ubyte[]) read("integration_test/"~filename);
 
-    bool toStdout(const ubyte[] toSend)
+    bool toStdout(const ubyte[] toSend) @trusted
     {
         write(cast(string) toSend);
         stdout.flush();
@@ -22,7 +22,7 @@ int main(string[] args)
         return true;
     }
 
-    Nullable!ubyte fromStdin(uint timeout)
+    Nullable!ubyte fromStdin(uint timeout) @trusted
     {
         auto startTime = MonoTime.currTime;
 
