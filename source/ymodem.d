@@ -55,13 +55,6 @@ class YModemSender
         in ubyte[] fileData
     )
     {
-        /*
-         * TODO: check filename for valid YMODEM symbols:
-         * ASCIIZ string without '\'.
-         * Systems that do not distinguish between upper and lower case
-         * letters in filenames shall send the pathname in lower case only.
-         */
-
         // TODO: abort transfer support
 
         // Waiting for initial C symbol
@@ -126,14 +119,14 @@ class YModemSender
 
         string blockContent = filename ~ '\x00' ~ filesize.to!string;
 
-        ubyte[] bytes = string2ubytesz(blockContent);
+        ubyte[] bytes = filenameString2ubytesz(blockContent);
 
         const size_t blockSize =  blockContent.length <= 128 ? 128 : 1024;
 
         sendBlock(blockSize, bytes, ACK);
     }
 
-    private static ubyte[] string2ubytesz(in string str) pure
+    private static ubyte[] filenameString2ubytesz(in string str) pure
     {
         import std.ascii;
         import std.exception;
@@ -142,7 +135,9 @@ class YModemSender
 
         foreach(c; str)
         {
-            enforce(c.isASCII, "Non-ASCII symbol is found");
+            enforce(c.isASCII, "Non-ASCII symbol is found in the filename");
+            enforce(c != '\\', "'\' isn't allowed in the filename");
+
             bytes ~= c;
         }
 
