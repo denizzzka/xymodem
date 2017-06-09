@@ -1,5 +1,7 @@
 module xymodem.exception;
 
+@safe:
+
 import std.exception;
 
 class YModemException : Exception
